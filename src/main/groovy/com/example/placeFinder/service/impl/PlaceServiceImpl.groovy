@@ -23,38 +23,38 @@ class PlaceServiceImpl implements PlaceService {
     private final String distanceMatrixUrl
 
     @Override
-    List<Place> getNearestPlaces(String latitude, String longitude, Integer radius, String type) {
+    List<Place> getNearestPlaces(Double latitude, Double longitude, Integer radius, String type) {
 
-        URL nearSearchUrl
-
-        if (type == "") {
-            nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&radius=" +
-                    radius + "&key=" + nearbySearchKey)
-        } else {
-            nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&radius=" +
-                    radius + "&type=" + type + "&key=" + nearbySearchKey)
-        }
+        URL nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&radius=" + radius +
+                 "&type=" + type + "&key=" + nearbySearchKey)
 
         def parsedData = new JsonSlurper().parse(nearSearchUrl)
+        String nextPageToken = parsedData.next_page_token
         List<Place> places = new ArrayList<>()
 
-//        while(parsedData.results.size() == 0) {
-//            radius*=10
-//            nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&radius=" +
-//                    radius + "&type=" + type + "&key=" + nearbySearchKey)
-//            parsedData = new JsonSlurper().parse(nearBySearchUrl)
-//        }
-
-        parsedData.results.each { placeItem ->
-            String placeLat = placeItem.geometry.location.lat
-            String placeLong = placeItem.geometry.location.lng
-            URL gettingDistanceUrl = new URL(distanceMatrixUrl + "?&origins=" + latitude + "," +
-                    longitude + "&destinations=" + placeLat + "," + placeLong + "&key=" + distanceMatrixKey)
-            def destinationParsedData = new JsonSlurper().parse(gettingDistanceUrl)
-            JSONObject distanced = destinationParsedData.rows
-            Integer distance = ((JSONObject) distanced.get("elements")).getJSONObject("distance").get("value")
-            places.add(new Place(name: placeItem.name, distance: distance))
+        def readData = {
+            parsedData.results.each { placeItem ->
+                String placeLat = placeItem.geometry.location.lat
+                String placeLong = placeItem.geometry.location.lng
+                URL gettingDistanceUrl = new URL(distanceMatrixUrl + "?&origins=" + latitude + "," +
+                        longitude + "&destinations=" + placeLat + "," + placeLong + "&key=" + distanceMatrixKey)
+                def destinationParsedData = new JsonSlurper().parse(gettingDistanceUrl)
+                JSONObject distanced = destinationParsedData.rows
+                Integer distance = ((JSONObject) distanced.get("elements")).getJSONObject("distance").get("value")
+                places.add(new Place(name: placeItem.name, distance: distance, rating: placeItem.rating))
+            }
         }
+
+        readData.call()
+
+        while(nextPageToken !=null) {
+            nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&radius=" + radius +
+                    "&type=" + type + "&key=" + nearbySearchKey + "&pagetoken=" + nextPageToken)
+            parsedData = new JsonSlurper().parse(nearSearchUrl)
+            nextPageToken = parsedData.next_page_token
+            readData.call()
+        }
+
 
         return places
     }
@@ -67,6 +67,29 @@ class PlaceServiceImpl implements PlaceService {
                 return o1.getDistance() - o2.getDistance()
             }
         })
+
+        return places
+    }
+
+
+    List<Place> getNearestPlacesV2(Double latitude, Double longitude, Integer radius, String type) {
+
+        URL nearSearchUrl = new URL(nearBySearchUrl + "?location=" + latitude + "," + longitude + "&rankby=distance" +
+//                "&radius=" + radius +
+                "&type=" + type + "&key=" + nearbySearchKey)
+        def parsedData = new JsonSlurper().parse(nearSearchUrl)
+        List<Place> places = new ArrayList<>()
+
+        parsedData.results.each { placeItem ->
+            String placeLat = placeItem.geometry.location.lat
+            String placeLong = placeItem.geometry.location.lng
+            URL gettingDistanceUrl = new URL(distanceMatrixUrl + "?&origins=" + latitude + "," +
+                    longitude + "&destinations=" + placeLat + ","  + placeLong + "&mode=walking" + "&key=" + distanceMatrixKey)
+            def destinationParsedData = new JsonSlurper().parse(gettingDistanceUrl)
+            JSONObject distanced = destinationParsedData.rows
+            Integer distance = ((JSONObject) distanced.get("elements")).getJSONObject("distance").get("value")
+            places.add(new Place(name: placeItem.name, distance: distance))
+        }
 
         return places
     }

@@ -1,4 +1,4 @@
-package com.example.placeFinder.controller
+package com.example.placeFinder.validator
 
 import net.sf.json.JSONObject
 import org.springframework.http.HttpHeaders
@@ -37,6 +37,14 @@ class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler 
     @ExceptionHandler([IllegalArgumentException.class, NullPointerException.class])
     ResponseEntity<Object> handleIllegalArgumentException(final Exception ex,
                                                                  final WebRequest request) {
+        String message = ex.getMessage()
+        return new ResponseEntity<>(createResponseBody(ex.getMessage()), new HttpHeaders(),
+                HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(MyException.class)
+    ResponseEntity<Object> handleMyException(final Exception ex,
+                                                          final WebRequest request) {
         String message = ex.getMessage()
         return new ResponseEntity<>(createResponseBody(ex.getMessage()), new HttpHeaders(),
                 HttpStatus.BAD_REQUEST)
