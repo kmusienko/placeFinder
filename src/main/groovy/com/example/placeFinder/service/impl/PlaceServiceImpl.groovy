@@ -1,5 +1,6 @@
 package com.example.placeFinder.service.impl
 
+import com.example.placeFinder.entity.FullPlace
 import com.example.placeFinder.entity.Place
 import com.example.placeFinder.service.PlaceService
 import net.sf.json.JSONObject
@@ -21,6 +22,9 @@ class PlaceServiceImpl implements PlaceService {
 
     @Value('${distancematrix.url}')
     private final String distanceMatrixUrl
+
+    @Value('${placedetails.url}')
+    private final String placeInfoUrl
 
     @Override
     List<Place> getNearestPlaces(Double latitude, Double longitude, Integer radius, String type) {
@@ -69,6 +73,15 @@ class PlaceServiceImpl implements PlaceService {
         })
 
         return places
+    }
+
+    @Override
+    FullPlace getFullInfo(String placeId) {
+        URL placeDetailsUrl = new URL(placeInfoUrl + "?placeId=" + placeId + "&key=" + nearbySearchKey)
+        def parsedData = new JsonSlurper().parse(placeDetailsUrl)
+        String address = parsedData.result.formatted_address
+
+        return null
     }
 
 

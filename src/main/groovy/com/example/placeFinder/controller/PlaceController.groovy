@@ -32,8 +32,8 @@ class PlaceController {
         return nearestPlaces
     }
 
-    @GetMapping(value = "/place/{id}")
-    FullPlace getPlaceFullInfo(@PathVariable Integer id) {
-        return null
+    @GetMapping(value = "/places/{placeId}")
+    FullPlace getPlaceFullInfo(@PathVariable String placeId) {
+        return placeService.getFullInfo(placeId)
     }
 }
