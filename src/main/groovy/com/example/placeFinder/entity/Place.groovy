@@ -4,7 +4,7 @@ class Place {
 
     private String name
     private Integer distance
-    private Integer rating
+    private Double rating
     private String placeId
 
     String getName() {
@@ -23,11 +23,11 @@ class Place {
         this.distance = distance
     }
 
-    Integer getRating() {
+    Double getRating() {
         return rating
     }
 
-    void setRating(Integer rating) {
+    void setRating(Double rating) {
         this.rating = rating
     }
 

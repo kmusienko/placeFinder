@@ -1,6 +1,6 @@
 package com.example.placeFinder.controller
 
-import com.example.placeFinder.entity.FullPlace
+import com.example.placeFinder.entity.InfoPlace
 import com.example.placeFinder.entity.Place
 import com.example.placeFinder.service.PlaceService
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,14 +26,14 @@ class PlaceController {
                              @RequestParam(value = "radius", required = false, defaultValue = "500") Integer radius,
                              @RequestParam(value = "type", required = false, defaultValue = "") String type) {
 
-        List<Place> nearestPlaces = placeService.getNearestPlaces(latitude, longitude, radius, type)
+        List<Place> nearestPlaces = placeService.getNearestPlacesOptimized(latitude, longitude, radius, type)
         placeService.sortPlacesByDistance(nearestPlaces)
 
         return nearestPlaces
     }
 
     @GetMapping(value = "/places/{placeId}")
-    FullPlace getPlaceFullInfo(@PathVariable String placeId) {
+    InfoPlace getPlaceFullInfo(@PathVariable String placeId) {
         return placeService.getFullInfo(placeId)
     }
 }

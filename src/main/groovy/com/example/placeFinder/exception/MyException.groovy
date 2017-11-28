@@ -1,4 +1,4 @@
-package com.example.placeFinder.validator
+package com.example.placeFinder.exception
 
 class MyException extends Exception{
 
