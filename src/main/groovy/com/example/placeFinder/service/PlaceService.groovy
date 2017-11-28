@@ -11,11 +11,8 @@ interface PlaceService {
 
     List<Place> getNearestPlacesOptimized(Double latitude, Double longitude, Integer radius, String type)
 
-    InfoPlace getFullInfo(String placeId)
+    InfoPlace getInfo(String placeId)
 
     List<Integer> getDistances(URL gettingDistanceUrl)
-
-    List<Place> getNearestPlacesUsingRankBy(Double latitude, Double longitude, Integer radius, String type)
-
 
 }

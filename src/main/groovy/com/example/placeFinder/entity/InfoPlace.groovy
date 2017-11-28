@@ -6,7 +6,7 @@ class InfoPlace {
     private String address
     private String iconUrl
     private String phoneNumber
-    private Boolean isOpenNow
+    private String isOpenNow
     private Double rating
     private String googleMapUrl
     private List<String> types
@@ -43,11 +43,11 @@ class InfoPlace {
         this.phoneNumber = phoneNumber
     }
 
-    Boolean getIsOpenNow() {
+    String getIsOpenNow() {
         return isOpenNow
     }
 
-    void setIsOpenNow(Boolean isOpenNow) {
+    void setIsOpenNow(String isOpenNow) {
         this.isOpenNow = isOpenNow
     }
 

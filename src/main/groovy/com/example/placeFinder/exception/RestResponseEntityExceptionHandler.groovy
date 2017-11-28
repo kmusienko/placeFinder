@@ -1,6 +1,6 @@
 package com.example.placeFinder.exception
 
-import com.example.placeFinder.exception.MyException
+
 import net.sf.json.JSONObject
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -11,10 +11,13 @@ import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 @ControllerAdvice
 class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
+
+    private static final String MSG_WRONG_TYPE = "Wrong type of request parameter"
 
     @SuppressWarnings("unchecked")
     private JSONObject createResponseBody(String message) {
@@ -35,20 +38,25 @@ class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler 
                 status, request)
     }
 
-    @ExceptionHandler([IllegalArgumentException.class])
-    ResponseEntity<Object> handleIllegalArgumentException(final Exception ex,
-                                                                 final WebRequest request) {
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    protected ResponseEntity<Object> handleMethodArgumentTypeMismatchException(final RuntimeException ex,
+                                                                               final WebRequest request) {
+        return handleExceptionInternal(ex, createResponseBody(MSG_WRONG_TYPE),
+                new HttpHeaders(), HttpStatus.BAD_REQUEST, request)
+    }
+
+    @ExceptionHandler(InvalidTypePlaceException.class)
+    ResponseEntity<Object> handleInvalidTypeException(final Exception ex, final WebRequest request) {
         String message = ex.getMessage()
         return new ResponseEntity<>(createResponseBody(ex.getMessage()), new HttpHeaders(),
                 HttpStatus.BAD_REQUEST)
     }
 
-    @ExceptionHandler(InvalidTypeException.class)
-    ResponseEntity<Object> handleMyException(final Exception ex,
-                                                          final WebRequest request) {
+    @ExceptionHandler(OverQueryLimitException.class)
+    ResponseEntity<Object> handgleStatusCodeException(final Exception ex, final WebRequest request) {
         String message = ex.getMessage()
         return new ResponseEntity<>(createResponseBody(ex.getMessage()), new HttpHeaders(),
-                HttpStatus.BAD_REQUEST)
+                HttpStatus.BANDWIDTH_LIMIT_EXCEEDED)
     }
 
 }
