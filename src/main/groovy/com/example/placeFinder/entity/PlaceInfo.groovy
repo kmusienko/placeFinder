@@ -1,6 +1,6 @@
 package com.example.placeFinder.entity
 
-class InfoPlace {
+class PlaceInfo {
 
     private String name
     private String address

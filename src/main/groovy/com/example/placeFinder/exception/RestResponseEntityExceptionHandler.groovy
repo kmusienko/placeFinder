@@ -45,7 +45,7 @@ class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler 
                 new HttpHeaders(), HttpStatus.BAD_REQUEST, request)
     }
 
-    @ExceptionHandler(InvalidTypePlaceException.class)
+    @ExceptionHandler([InvalidTypePlaceException.class, InvalidGeoCoordinatesException.class])
     ResponseEntity<Object> handleInvalidTypeException(final Exception ex, final WebRequest request) {
         String message = ex.getMessage()
         return new ResponseEntity<>(createResponseBody(ex.getMessage()), new HttpHeaders(),

@@ -1,6 +1,5 @@
 package com.example.placeFinder.service.impl
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
@@ -20,4 +19,6 @@ class PropertiesProvider {
 
     //@Value('${placedetails.url}')
     final static String GOOGLE_PLACEDETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
+
+    final static double EARTH_RADIUS = 6371
 }

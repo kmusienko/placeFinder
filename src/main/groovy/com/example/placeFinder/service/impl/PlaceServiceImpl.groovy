@@ -1,10 +1,14 @@
 package com.example.placeFinder.service.impl
 
-import com.example.placeFinder.entity.InfoPlace
+import com.example.placeFinder.entity.PlaceInfo
 import com.example.placeFinder.entity.Place
+import com.example.placeFinder.service.CustomURLBuilder
 import com.example.placeFinder.service.PlaceService
+import com.example.placeFinder.validation.GeoCoordinatesValidator
 import com.example.placeFinder.validation.StatusCodeValidator
 import com.example.placeFinder.validation.TypeValidator
+import com.google.maps.model.Geometry
+import net.sf.json.JSON
 import net.sf.json.JSONObject
 import net.sf.json.groovy.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,6 +21,12 @@ class PlaceServiceImpl implements PlaceService {
 
     private StatusCodeValidator statusValidator
 
+    private GeoCoordinatesValidator geoCoordinatesValidator
+    
+    private CustomURLBuilder customURLBuilder
+
+    private URLParser urlParser
+
     @Autowired
     void setTypeValidator(TypeValidator typeValidator) {
         this.typeValidator = typeValidator
@@ -25,6 +35,21 @@ class PlaceServiceImpl implements PlaceService {
     @Autowired
     void setStatusValidator(StatusCodeValidator statusValidator) {
         this.statusValidator = statusValidator
+    }
+
+    @Autowired
+    void setGeoCoordinatesValidator(GeoCoordinatesValidator geoCoordinatesValidator) {
+        this.geoCoordinatesValidator = geoCoordinatesValidator
+    }
+
+    @Autowired
+    void setCustomURLBuilder(CustomURLBuilder customURLBuilder) {
+        this.customURLBuilder = customURLBuilder
+    }
+
+    @Autowired
+    void setUrlParser(URLParser urlParser) {
+        this.urlParser = urlParser
     }
 
     @Override
@@ -40,10 +65,17 @@ class PlaceServiceImpl implements PlaceService {
     }
 
     @Override
-    InfoPlace getInfo(String placeId) {
+    PlaceInfo getInfo(String placeId) {
 
-        URL placeDetailsUrl = new URL(PropertiesProvider.GOOGLE_PLACEDETAILS_URL + "?placeid=" + placeId + "&key=" + PropertiesProvider.GOOGLE_NEARSEARCH_KEY)
-        def parsedData = new JsonSlurper().parse(placeDetailsUrl)
+        def parsedData = urlParser.parseURL(customURLBuilder.buildPlaceDetailsUrl(
+                PropertiesProvider.GOOGLE_PLACEDETAILS_URL, placeId, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
+
+        return createPlaceInfoObject(parsedData)
+    }
+
+    @Override
+    PlaceInfo createPlaceInfoObject(JSON parsedData) {
+
         String address = parsedData.result.formatted_address
         String iconUrl = parsedData.result.icon
         String phoneNumber = parsedData.result.international_phone_number
@@ -54,18 +86,75 @@ class PlaceServiceImpl implements PlaceService {
         String name = parsedData.result.name
         List<String> types = parsedData.result.types
 
-        InfoPlace infoPlace = new InfoPlace(name: name, address: address, iconUrl: iconUrl, phoneNumber: phoneNumber,
+        PlaceInfo infoPlace = new PlaceInfo(name: name, address: address, iconUrl: iconUrl, phoneNumber: phoneNumber,
                 isOpenNow: isOpenNow, rating: rating, googleMapUrl: googleMapUrl, types: types)
 
         return infoPlace
     }
 
     @Override
-    List<Place> getNearestPlacesOptimized(Double latitude, Double longitude, Integer radius, String type) {
+    List<Place> getNearestPlacesSuperOptimized(Double latitude, Double longitude, Integer radius, String type) {
 
+        geoCoordinatesValidator.checkCoordinatesValidity(latitude, longitude)
         typeValidator.checkTypeValidity(type)
 
-        def parsedData = new JsonSlurper().parse(CustomURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
+        def parsedData = urlParser.parseURL(customURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
+                latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
+
+        statusValidator.checkStatusCode(parsedData)
+
+        String nextPageToken = parsedData.next_page_token
+        List<Place> places = new ArrayList<>()
+        StringBuilder destinations = new StringBuilder()
+
+        def readDataOpt = {
+            parsedData.results.each { placeItem ->
+                Double itemLatitude = placeItem.geometry.location.lat
+                Double itemLongitude = placeItem.geometry.location.lng
+                int directDistance = getDirectDistance(latitude, longitude, itemLatitude, itemLongitude)
+                destinations.append("place_id:" + placeItem.place_id + "|")
+                places.add(new Place(name: placeItem.name, rating: placeItem.rating, placeId: placeItem.place_id,
+                distance: directDistance))
+            }
+        }
+        readDataOpt.call()
+        while(nextPageToken !=null) {
+            URL nearSearchUrl = customURLBuilder.buildNearSearchUrlWithToken(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
+                    latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY, nextPageToken)
+            parsedData = urlParser.parseURL(nearSearchUrl)
+            statusValidator.checkStatusCode(parsedData)
+            while(parsedData.status=="INVALID_REQUEST") {
+                parsedData = new JsonSlurper().parse(nearSearchUrl)
+            }
+            nextPageToken = parsedData.next_page_token
+            readDataOpt.call()
+        }
+        return places
+    }
+
+    @Override
+    int getDirectDistance(Double fromLatitude, Double fromLongitude, Double toLatitude, Double toLongitude) {
+        // Рассчитываем расстояние между точками
+        final double dlng = degreesToradians(fromLongitude - toLongitude);
+        final double dlat = degreesToradians(fromLatitude - toLatitude);
+        final double a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(degreesToradians(toLatitude))*
+                Math.cos(degreesToradians(fromLatitude))* Math.sin(dlng / 2) * Math.sin(dlng / 2);
+        final double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return (int) (c * PropertiesProvider.EARTH_RADIUS * 1000) // получаем расстояние в километрах(метрах)
+
+    }
+
+    double degreesToradians(Double degree) {
+        return degree * (Math.PI / 180);
+    }
+
+    @Override
+    List<Place> getNearestPlacesOptimized(Double latitude, Double longitude, Integer radius, String type) {
+
+        geoCoordinatesValidator.checkCoordinatesValidity(latitude, longitude)
+        typeValidator.checkTypeValidity(type)
+
+        def parsedData = urlParser.parseURL(customURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
                 latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
 
         statusValidator.checkStatusCode(parsedData)
@@ -80,13 +169,11 @@ class PlaceServiceImpl implements PlaceService {
                 places.add(new Place(name: placeItem.name, rating: placeItem.rating, placeId: placeItem.place_id))
             }
         }
-
         readDataOpt.call()
-
         while(nextPageToken !=null) {
-            URL nearSearchUrl = CustomURLBuilder.buildNearSearchUrlWithToken(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL, latitude, longitude, radius, type,
-                    PropertiesProvider.GOOGLE_NEARSEARCH_KEY, nextPageToken)
-            parsedData = new JsonSlurper().parse(nearSearchUrl)
+            URL nearSearchUrl = customURLBuilder.buildNearSearchUrlWithToken(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
+                    latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY, nextPageToken)
+            parsedData = urlParser.parseURL(nearSearchUrl)
             statusValidator.checkStatusCode(parsedData)
             while(parsedData.status=="INVALID_REQUEST") {
                 parsedData = new JsonSlurper().parse(nearSearchUrl)
@@ -95,18 +182,17 @@ class PlaceServiceImpl implements PlaceService {
             readDataOpt.call()
         }
 
-        List<Integer> distances = getDistances(CustomURLBuilder.buildGettingDistanceURL(PropertiesProvider.GOOGLE_DISTANCEMATRIX_URL,
+        List<Integer> distances = getDistances(customURLBuilder.buildGettingDistanceURL(PropertiesProvider.GOOGLE_DISTANCEMATRIX_URL,
         latitude, longitude, destinations, PropertiesProvider.GOOGLE_DISTANCEMATRIX_KEY))
         for (int i=0; i<places.size(); i++) {
             places.get(i).distance = distances.get(i)
         }
-
         return places
     }
 
     @Override
     List<Integer> getDistances(URL gettingDistanceUrl) {
-        def destinationParsedData = new JsonSlurper().parse(gettingDistanceUrl)
+        def destinationParsedData = urlParser.parseURL(gettingDistanceUrl)
         statusValidator.checkStatusCode(destinationParsedData)
         JSONObject distanced = destinationParsedData.rows
         List<Integer> distances = new ArrayList<>()
@@ -121,7 +207,7 @@ class PlaceServiceImpl implements PlaceService {
     @Override
     List<Place> getNearestPlaces(Double latitude, Double longitude, Integer radius, String type) {
 
-        def parsedData = new JsonSlurper().parse(CustomURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
+        def parsedData = new JsonSlurper().parse(customURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
                 latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
 
         String nextPageToken = parsedData.next_page_token
@@ -152,7 +238,7 @@ class PlaceServiceImpl implements PlaceService {
         readData.call()
 
         while(nextPageToken !=null) {
-            parsedData = new JsonSlurper().parse(CustomURLBuilder.buildNearSearchUrlWithToken(
+            parsedData = new JsonSlurper().parse(customURLBuilder.buildNearSearchUrlWithToken(
                     PropertiesProvider.GOOGLE_NEARBYSEARCH_URL, latitude, longitude, radius, type,
                     PropertiesProvider.GOOGLE_NEARSEARCH_KEY, nextPageToken))
             nextPageToken = parsedData.next_page_token

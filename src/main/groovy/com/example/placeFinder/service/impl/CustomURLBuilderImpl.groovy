@@ -1,25 +1,34 @@
 package com.example.placeFinder.service.impl
 
-class CustomURLBuilder {
+import com.example.placeFinder.service.CustomURLBuilder
+import org.springframework.stereotype.Component
 
-    static URL buildNearSearchUrl(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
+@Component
+class CustomURLBuilderImpl implements CustomURLBuilder{
+
+    URL buildNearSearchUrl(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
                                   String type, String googleNearSearchKey) {
 
         return new URL(googleNearbySearchURL + "?location=" + latitude + "," +
                 longitude + "&radius=" + radius + "&type=" + type + "&key=" + googleNearSearchKey)
     }
 
-    static URL buildNearSearchUrlWithToken(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
+    URL buildNearSearchUrlWithToken(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
                                   String type, String googleNearSearchKey, String nextPageToken) {
 
         return new URL(googleNearbySearchURL + "?location=" + latitude + "," + longitude + "&radius=" + radius +
                 "&type=" + type + "&key=" + googleNearSearchKey + "&pagetoken=" + nextPageToken)
     }
 
-    static URL buildGettingDistanceURL(String googleDistanceMatrixURL, Double latitude, Double longitude,
+    URL buildGettingDistanceURL(String googleDistanceMatrixURL, Double latitude, Double longitude,
                                        StringBuilder destinations, String googleDistanceMatrixKey) {
         return new URL(googleDistanceMatrixURL + "?&origins=" + latitude + "," + longitude +
                 "&destinations=" + destinations + "&key=" + googleDistanceMatrixKey)
     }
 
+    @Override
+    URL buildPlaceDetailsUrl(String googlePlaceDetailsURL, String placeId, String googleNearSearchKey) {
+
+        return new URL(googlePlaceDetailsURL + "?placeid=" + placeId + "&key=" + googleNearSearchKey)
+    }
 }
