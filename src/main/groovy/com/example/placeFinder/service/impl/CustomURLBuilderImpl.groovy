@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 @Component
 class CustomURLBuilderImpl implements CustomURLBuilder{
 
+    @Override
     URL buildNearSearchUrl(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
                                   String type, String googleNearSearchKey) {
 
@@ -13,6 +14,7 @@ class CustomURLBuilderImpl implements CustomURLBuilder{
                 longitude + "&radius=" + radius + "&type=" + type + "&key=" + googleNearSearchKey)
     }
 
+    @Override
     URL buildNearSearchUrlWithToken(String googleNearbySearchURL, Double latitude, Double longitude, Integer radius,
                                   String type, String googleNearSearchKey, String nextPageToken) {
 
@@ -20,6 +22,7 @@ class CustomURLBuilderImpl implements CustomURLBuilder{
                 "&type=" + type + "&key=" + googleNearSearchKey + "&pagetoken=" + nextPageToken)
     }
 
+    @Override
     URL buildGettingDistanceURL(String googleDistanceMatrixURL, Double latitude, Double longitude,
                                        StringBuilder destinations, String googleDistanceMatrixKey) {
         return new URL(googleDistanceMatrixURL + "?&origins=" + latitude + "," + longitude +
