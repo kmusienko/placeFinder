@@ -136,10 +136,31 @@ class PlaceServiceImpl implements PlaceService {
             fillListOfPlaces(places, latitude, longitude, radius, type)
 
         } else {
-            radius = 500
-            fillListOfPlaces(places, latitude, longitude, radius, type)
+            int optimalRadius = getOptimalRadiusByBinarySearch(latitude, longitude, type)
+            fillListOfPlaces(places, latitude, longitude, optimalRadius, type)
         }
         return places
+    }
+
+    int getOptimalRadiusByBinarySearch(Double latitude, Double longitude, String type) {
+        List<Place> places = new ArrayList<>()
+        int begin = 0
+        int end = PropertiesProvider.DEFAULT_RADIUS
+        fillListOfPlaces(places, latitude, longitude, end, type)
+        if (places.size() == 60) {
+            places.clear()
+            while(end - begin > 20) {
+                int newRadius = (begin + end) / 2
+                places.clear()
+                fillListOfPlaces(places, latitude, longitude, newRadius, type)
+                if (places.size() < 60) {
+                    begin = newRadius
+                } else {
+                    end = newRadius
+                }
+            }
+        }
+        return begin
     }
 
     @Override
