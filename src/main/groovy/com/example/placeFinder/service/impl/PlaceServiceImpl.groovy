@@ -105,14 +105,12 @@ class PlaceServiceImpl implements PlaceService {
 
         String nextPageToken = parsedData.next_page_token
         List<Place> places = new ArrayList<>()
-        StringBuilder destinations = new StringBuilder()
 
         def readDataOpt = {
             parsedData.results.each { placeItem ->
                 Double itemLatitude = placeItem.geometry.location.lat
                 Double itemLongitude = placeItem.geometry.location.lng
                 int directDistance = getDirectDistance(latitude, longitude, itemLatitude, itemLongitude)
-                destinations.append("place_id:" + placeItem.place_id + "|")
                 places.add(new Place(name: placeItem.name, rating: placeItem.rating, placeId: placeItem.place_id,
                 distance: directDistance))
             }
@@ -135,19 +133,28 @@ class PlaceServiceImpl implements PlaceService {
     @Override
     int getDirectDistance(Double fromLatitude, Double fromLongitude, Double toLatitude, Double toLongitude) {
         // Рассчитываем расстояние между точками
-        final double dlng = degreesToradians(fromLongitude - toLongitude);
-        final double dlat = degreesToradians(fromLatitude - toLatitude);
-        final double a = Math.sin(dlat / 2) * Math.sin(dlat / 2) + Math.cos(degreesToradians(toLatitude))*
-                Math.cos(degreesToradians(fromLatitude))* Math.sin(dlng / 2) * Math.sin(dlng / 2);
-        final double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double radLng = Math.toRadians(fromLongitude - toLongitude)
+        double radLat = Math.toRadians(fromLatitude - toLatitude)
+        double a = Math.sin(radLat / 2) * Math.sin(radLat / 2) + Math.cos(Math.toRadians(toLatitude))*
+                Math.cos(Math.toRadians(fromLatitude))* Math.sin(radLng / 2) * Math.sin(radLng / 2)
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
         return (int) (c * PropertiesProvider.EARTH_RADIUS * 1000) // получаем расстояние в километрах(метрах)
-
     }
 
-    double degreesToradians(Double degree) {
-        return degree * (Math.PI / 180);
+    @Override
+    List<Integer> getDistances(URL gettingDistanceUrl) {
+        def destinationParsedData = urlParser.parseURL(gettingDistanceUrl)
+        statusValidator.checkStatusCode(destinationParsedData)
+        JSONObject distanced = destinationParsedData.rows
+        List<Integer> distances = new ArrayList<>()
+        distanced.elements.each { item ->
+            Integer distance = item.distance.value
+            distances.add(distance)
+        }
+        return distances
     }
 
+    @Deprecated
     @Override
     List<Place> getNearestPlacesOptimized(Double latitude, Double longitude, Integer radius, String type) {
 
@@ -183,27 +190,14 @@ class PlaceServiceImpl implements PlaceService {
         }
 
         List<Integer> distances = getDistances(customURLBuilder.buildGettingDistanceURL(PropertiesProvider.GOOGLE_DISTANCEMATRIX_URL,
-        latitude, longitude, destinations, PropertiesProvider.GOOGLE_DISTANCEMATRIX_KEY))
+                latitude, longitude, destinations, PropertiesProvider.GOOGLE_DISTANCEMATRIX_KEY))
         for (int i=0; i<places.size(); i++) {
             places.get(i).distance = distances.get(i)
         }
         return places
     }
 
-    @Override
-    List<Integer> getDistances(URL gettingDistanceUrl) {
-        def destinationParsedData = urlParser.parseURL(gettingDistanceUrl)
-        statusValidator.checkStatusCode(destinationParsedData)
-        JSONObject distanced = destinationParsedData.rows
-        List<Integer> distances = new ArrayList<>()
-        distanced.elements.each { item ->
-            Integer distance = item.distance.value
-            distances.add(distance)
-        }
-        return distances
-    }
-
-    //deprecated
+    @Deprecated
     @Override
     List<Place> getNearestPlaces(Double latitude, Double longitude, Integer radius, String type) {
 
