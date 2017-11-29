@@ -92,16 +92,10 @@ class PlaceServiceImpl implements PlaceService {
         return infoPlace
     }
 
-    @Override
-    List<Place> getNearestPlacesSuperOptimized(Double latitude, Double longitude, Integer radius, String type) {
-
-        geoCoordinatesValidator.checkCoordinatesValidity(latitude, longitude)
-        typeValidator.checkTypeValidity(type)
-
-        List<Place> places = new ArrayList<>()
+    void fillListOfPlaces(List<Place> places, Double latitude, Double longitude, Integer radius, String type) {
 
         def parsedData = urlParser.parseURL(customURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
-                    latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
+                latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
 
         statusValidator.checkStatusCode(parsedData)
 
@@ -128,20 +122,36 @@ class PlaceServiceImpl implements PlaceService {
 
             nextPageToken = parsedData.next_page_token
         }
+    }
 
+    @Override
+    List<Place> getNearestPlacesSuperOptimized(Double latitude, Double longitude, Integer radius, String type) {
 
+        geoCoordinatesValidator.checkCoordinatesValidity(latitude, longitude)
+        typeValidator.checkTypeValidity(type)
+
+        List<Place> places = new ArrayList<>()
+
+        if (radius != null) {
+            fillListOfPlaces(places, latitude, longitude, radius, type)
+
+        } else {
+            radius = 500
+            fillListOfPlaces(places, latitude, longitude, radius, type)
+        }
         return places
     }
 
     @Override
     int getDirectDistance(Double fromLatitude, Double fromLongitude, Double toLatitude, Double toLongitude) {
-        // Рассчитываем расстояние между точками
+        // Calculating a distance between two points
         double radLng = Math.toRadians(fromLongitude - toLongitude)
         double radLat = Math.toRadians(fromLatitude - toLatitude)
         double a = Math.sin(radLat / 2) * Math.sin(radLat / 2) + Math.cos(Math.toRadians(toLatitude))*
                 Math.cos(Math.toRadians(fromLatitude))* Math.sin(radLng / 2) * Math.sin(radLng / 2)
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return (int) (c * PropertiesProvider.EARTH_RADIUS * 1000) // получаем расстояние в километрах(метрах)
+        // receiving the distance in meters
+        return (int) (c * PropertiesProvider.EARTH_RADIUS * 1000)
     }
 
     @Override
