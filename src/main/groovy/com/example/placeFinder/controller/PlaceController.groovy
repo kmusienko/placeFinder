@@ -23,7 +23,7 @@ class PlaceController {
     @GetMapping(value = "/places")
     List<Place> getNearestPlaces(@RequestParam(value = "latitude") Double latitude,
                                  @RequestParam(value = "longitude") Double longitude,
-                                 @RequestParam(value = "radius", required = false, defaultValue = "150") Integer radius,
+                                 @RequestParam(value = "radius", required = false) Integer radius,
                                  @RequestParam(value = "type", required = false, defaultValue = "") String type) {
 
         List<Place> nearestPlaces = placeService.getNearestPlacesSuperOptimized(latitude, longitude, radius, type)

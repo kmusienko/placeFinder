@@ -98,25 +98,26 @@ class PlaceServiceImpl implements PlaceService {
         geoCoordinatesValidator.checkCoordinatesValidity(latitude, longitude)
         typeValidator.checkTypeValidity(type)
 
+        List<Place> places = new ArrayList<>()
+
         def parsedData = urlParser.parseURL(customURLBuilder.buildNearSearchUrl(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
-                latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
+                    latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY))
 
         statusValidator.checkStatusCode(parsedData)
 
         String nextPageToken = parsedData.next_page_token
-        List<Place> places = new ArrayList<>()
 
-        def readDataOpt = {
+        while(true) {
             parsedData.results.each { placeItem ->
                 Double itemLatitude = placeItem.geometry.location.lat
                 Double itemLongitude = placeItem.geometry.location.lng
                 int directDistance = getDirectDistance(latitude, longitude, itemLatitude, itemLongitude)
                 places.add(new Place(name: placeItem.name, rating: placeItem.rating, placeId: placeItem.place_id,
-                distance: directDistance))
+                        distance: directDistance))
             }
-        }
-        readDataOpt.call()
-        while(nextPageToken !=null) {
+
+            if (nextPageToken == null) break
+
             URL nearSearchUrl = customURLBuilder.buildNearSearchUrlWithToken(PropertiesProvider.GOOGLE_NEARBYSEARCH_URL,
                     latitude, longitude, radius, type, PropertiesProvider.GOOGLE_NEARSEARCH_KEY, nextPageToken)
             parsedData = urlParser.parseURL(nearSearchUrl)
@@ -124,9 +125,11 @@ class PlaceServiceImpl implements PlaceService {
             while(parsedData.status=="INVALID_REQUEST") {
                 parsedData = new JsonSlurper().parse(nearSearchUrl)
             }
+
             nextPageToken = parsedData.next_page_token
-            readDataOpt.call()
         }
+
+
         return places
     }
 
