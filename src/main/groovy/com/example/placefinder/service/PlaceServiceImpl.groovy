@@ -98,7 +98,6 @@ class PlaceServiceImpl implements PlaceService {
         } else {
             places = calcOptPlaces(location, type)
         }
-
         return places
     }
 
