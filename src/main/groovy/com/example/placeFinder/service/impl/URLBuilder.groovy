@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component
 class URLBuilder {
 
     URL parse(ApiProvider apiProvider, Map<String, Object> params) {
-        if (apiProvider.name() == "GOOGLE_NEAR_SEARCH") {
+        if (apiProvider == ApiProvider.GOOGLE_NEARSEARCH) {
             return parseGoogleNearSearch(params)
-        } else if (apiProvider.name() == "GOOGLE_PLACE_DETAILS") {
+        } else if (apiProvider == ApiProvider.GOOGLE_PLACEDETAILS) {
             return parseGooglePlaceDetails(params)
         }
     }
@@ -38,9 +38,15 @@ class URLBuilder {
     }
 
     private URL parseGooglePlaceDetails(Map<String, Object> params) {
+        StringBuilder stringURL = new StringBuilder()
+        stringURL
+        .append(PropertiesProvider.GOOGLE_PLACEDETAILS_URL)
+        .append("?placeid=")
+        .append(params.get("placeId"))
+        .append("&key=")
+        .append(PropertiesProvider.GOOGLE_NEARSEARCH_KEY)
 
-
-
+        return new URL(stringURL.toString())
     }
 
 }

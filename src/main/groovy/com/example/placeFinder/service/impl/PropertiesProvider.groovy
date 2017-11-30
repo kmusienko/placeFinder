@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 class PropertiesProvider {
 
     //@Value('${google.key.nearbysearch}')
-    final static String GOOGLE_NEARSEARCH_KEY = "AIzaSyCC1UMkSkIZTtM-xPacI_gboHe4jipOP-w"
+    final static String GOOGLE_NEARSEARCH_KEY = "AIzaSyB-LxRAoEEl9xPAra8ktpvOdYp5TeGuGb0"
 
     //@Value('${google.key.distancematrix}')
     final static String GOOGLE_DISTANCEMATRIX_KEY = "AIzaSyCg7fbFoVhOUUt1gRTp2OVoijVEyDTkCBs"
@@ -23,4 +23,9 @@ class PropertiesProvider {
     final static double EARTH_RADIUS = 6371
 
     final static int DEFAULT_RADIUS = 1000
+
+    //Accuracy of the optimal radius
+    final static int EPS = 20
+
+    final static int MAX_GOOGLE_PLACES = 60
 }
