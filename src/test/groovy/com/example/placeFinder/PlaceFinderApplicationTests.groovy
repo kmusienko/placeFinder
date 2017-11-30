@@ -1,4 +1,4 @@
-package com.example.placeFinder
+package com.example.placefinder
 
 import org.junit.Test
 import org.junit.runner.RunWith
