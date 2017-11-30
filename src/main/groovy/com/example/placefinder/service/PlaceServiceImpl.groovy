@@ -205,6 +205,4 @@ class PlaceServiceImpl implements PlaceService {
         return begin
     }
 
-
-
 }
