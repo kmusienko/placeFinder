@@ -1,4 +1,4 @@
-package com.example.placeFinder.validation
+package com.example.placeFinder.validator
 
 interface TypeValidator {
 

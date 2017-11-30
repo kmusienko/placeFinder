@@ -1,7 +1,7 @@
-package com.example.placeFinder.validation.impl
+package com.example.placeFinder.validator.impl
 
 import com.example.placeFinder.exception.InvalidGeoCoordinatesException
-import com.example.placeFinder.validation.GeoCoordinatesValidator
+import com.example.placeFinder.validator.GeoCoordinatesValidator
 import org.springframework.stereotype.Component
 
 @Component

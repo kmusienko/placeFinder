@@ -1,7 +1,7 @@
-package com.example.placeFinder.service.impl
+package com.example.placeFinder.service
 
+import com.example.placeFinder.component.PropertiesProvider
 import com.example.placeFinder.entity.Location
-import com.example.placeFinder.service.LocationService
 import org.springframework.stereotype.Service
 
 @Service

@@ -1,4 +1,4 @@
-package com.example.placeFinder.service.impl
+package com.example.placeFinder.component
 
 import com.example.placeFinder.entity.enums.DataFormat
 import net.sf.json.groovy.JsonSlurper

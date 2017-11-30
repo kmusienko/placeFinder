@@ -7,6 +7,7 @@ class PlaceInfo {
     private String iconUrl
     private String phoneNumber
     private String isOpenNow
+    private List<String> schedule
     private Double rating
     private String googleMapUrl
     private List<String> types
@@ -49,6 +50,14 @@ class PlaceInfo {
 
     void setIsOpenNow(String isOpenNow) {
         this.isOpenNow = isOpenNow
+    }
+
+    List<String> getSchedule() {
+        return schedule
+    }
+
+    void setSchedule(List<String> schedule) {
+        this.schedule = schedule
     }
 
     Double getRating() {

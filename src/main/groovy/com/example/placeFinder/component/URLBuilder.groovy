@@ -1,4 +1,4 @@
-package com.example.placeFinder.service.impl
+package com.example.placeFinder.component
 
 import com.example.placeFinder.entity.enums.ApiProvider
 import org.springframework.stereotype.Component
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 @Component
 class URLBuilder {
 
-    URL parse(ApiProvider apiProvider, Map<String, Object> params) {
+    URL build(ApiProvider apiProvider, Map<String, Object> params) {
         if (apiProvider == ApiProvider.GOOGLE_NEARSEARCH) {
             return parseGoogleNearSearch(params)
         } else if (apiProvider == ApiProvider.GOOGLE_PLACEDETAILS) {
@@ -31,7 +31,8 @@ class URLBuilder {
 
         if (params.containsKey("nextPageToken")) {
             stringURL
-                    .append("&pagetoken=").append(params.get("nextPageToken"))
+                    .append("&pagetoken=")
+                    .append(params.get("nextPageToken"))
         }
 
         return new URL(stringURL.toString())

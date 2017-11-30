@@ -1,4 +1,4 @@
-package com.example.placeFinder.service.impl
+package com.example.placeFinder.component
 
 import org.springframework.stereotype.Component
 

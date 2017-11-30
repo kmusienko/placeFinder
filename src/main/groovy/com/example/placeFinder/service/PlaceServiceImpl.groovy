@@ -1,15 +1,16 @@
-package com.example.placeFinder.service.impl
+package com.example.placeFinder.service
 
+import com.example.placeFinder.component.PropertiesProvider
+import com.example.placeFinder.component.URLBuilder
+import com.example.placeFinder.component.URLParser
 import com.example.placeFinder.entity.Location
 import com.example.placeFinder.entity.PlaceInfo
 import com.example.placeFinder.entity.Place
 import com.example.placeFinder.entity.enums.ApiProvider
 import com.example.placeFinder.entity.enums.DataFormat
-import com.example.placeFinder.service.LocationService
-import com.example.placeFinder.service.PlaceService
-import com.example.placeFinder.validation.GeoCoordinatesValidator
-import com.example.placeFinder.validation.StatusCodeValidator
-import com.example.placeFinder.validation.TypeValidator
+import com.example.placeFinder.validator.GeoCoordinatesValidator
+import com.example.placeFinder.validator.StatusCodeValidator
+import com.example.placeFinder.validator.TypeValidator
 import net.sf.json.JSON
 import net.sf.json.JSONObject
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,7 +53,7 @@ class PlaceServiceImpl implements PlaceService {
     PlaceInfo getInfo(String placeId) {
         Map<String, Object> params = new HashMap<>()
         params.put("placeId", placeId)
-        def parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.parse(ApiProvider.GOOGLE_PLACEDETAILS, params))
+        def parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.build(ApiProvider.GOOGLE_PLACEDETAILS, params))
         return createPlaceInfoObject(parsedData)
     }
 
@@ -64,13 +65,22 @@ class PlaceServiceImpl implements PlaceService {
         String phoneNumber = parsedData.result.international_phone_number
         JSONObject resultJson = parsedData.result
         String isOpenNow =  ((JSONObject) resultJson.get("opening_hours")).get("open_now")
+        List<String> schedule = parsedData.result.opening_hours.weekday_text
         String googleMapUrl = parsedData.result.url
         Double rating = parsedData.result.rating
         String name = parsedData.result.name
         List<String> types = parsedData.result.types
 
-        PlaceInfo infoPlace = new PlaceInfo(name: name, address: address, iconUrl: iconUrl, phoneNumber: phoneNumber,
-                isOpenNow: isOpenNow, rating: rating, googleMapUrl: googleMapUrl, types: types)
+        PlaceInfo infoPlace = new PlaceInfo(
+                name: name,
+                address: address,
+                iconUrl: iconUrl,
+                phoneNumber: phoneNumber,
+                isOpenNow: isOpenNow,
+                rating: rating,
+                googleMapUrl: googleMapUrl,
+                types: types,
+                schedule: schedule)
 
         return infoPlace
     }
@@ -82,7 +92,7 @@ class PlaceServiceImpl implements PlaceService {
         params.put("radius", radius)
         params.put("type", type)
 
-        def parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.parse(ApiProvider.GOOGLE_NEARSEARCH, params))
+        def parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.build(ApiProvider.GOOGLE_NEARSEARCH, params))
 
         statusValidator.checkStatusCode(parsedData)
 
@@ -94,16 +104,19 @@ class PlaceServiceImpl implements PlaceService {
                 int directDistance = locationService.calcDistanceBetween(
                         new Location(latitude: latitude, longitude:longitude),
                         new Location(latitude: itemLatitude, longitude: itemLongitude))
-                places.add(new Place(name: placeItem.name, rating: placeItem.rating, placeId: placeItem.place_id,
-                        distance: directDistance))
+                places.add(new Place(
+                                name: placeItem.name,
+                                rating: placeItem.rating,
+                                placeId: placeItem.place_id,
+                                distance: directDistance))
             }
             if (nextPageToken == null) break
 
             params.put("nextPageToken", nextPageToken)
-            parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.parse(ApiProvider.GOOGLE_NEARSEARCH, params))
+            parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.build(ApiProvider.GOOGLE_NEARSEARCH, params))
             statusValidator.checkStatusCode(parsedData)
             while(parsedData.status=="INVALID_REQUEST") {
-                parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.parse(ApiProvider.GOOGLE_NEARSEARCH, params))
+                parsedData = urlParser.parseURL(DataFormat.JSON, urlBuilder.build(ApiProvider.GOOGLE_NEARSEARCH, params))
             }
             nextPageToken = parsedData.next_page_token
         }

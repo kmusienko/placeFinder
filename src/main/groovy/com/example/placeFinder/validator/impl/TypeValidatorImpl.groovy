@@ -1,7 +1,7 @@
-package com.example.placeFinder.validation.impl
+package com.example.placeFinder.validator.impl
 
 import com.example.placeFinder.exception.InvalidTypePlaceException
-import com.example.placeFinder.validation.TypeValidator
+import com.example.placeFinder.validator.TypeValidator
 import org.springframework.stereotype.Component
 
 import java.nio.file.Files

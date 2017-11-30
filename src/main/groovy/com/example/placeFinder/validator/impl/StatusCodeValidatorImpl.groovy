@@ -1,7 +1,7 @@
-package com.example.placeFinder.validation.impl
+package com.example.placeFinder.validator.impl
 
 import com.example.placeFinder.exception.OverQueryLimitException
-import com.example.placeFinder.validation.StatusCodeValidator
+import com.example.placeFinder.validator.StatusCodeValidator
 import org.springframework.stereotype.Component
 
 @Component
